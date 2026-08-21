@@ -780,9 +780,65 @@
       box-shadow: 0 0 0 1px rgba(46, 204, 113, 0.4) !important;
       background: rgba(46, 204, 113, 0.05) !important;
     }
+
+    /* ----- LOGIN OVERLAY STYLES (from ref.html) ----- */
+    :root {
+      --accent: #f5b700;
+    }
+    #login-overlay {
+      position: fixed;
+      inset: 0;
+      background: #050505;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-box {
+      width: 100%;
+      max-width: 350px;
+      background: #111;
+      padding: 40px;
+      border-radius: 12px;
+      border: 1px solid #222;
+      text-align: center;
+    }
+    .login-input {
+      width: 100%;
+      padding: 14px;
+      margin: 12px 0;
+      background: #0a0a0a;
+      border: 1px solid #333;
+      color: #fff;
+      border-radius: 6px;
+      font-size: 16px;
+      outline: none;
+    }
+    .login-submit {
+      width: 100%;
+      padding: 14px;
+      margin-top: 20px;
+      background: var(--accent);
+      border: none;
+      color: #000;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
   </style>
 </head>
 <body>
+<!-- LOGIN OVERLAY (from ref.html) -->
+<div id="login-overlay">
+  <div class="login-box">
+    <h2 style="color:var(--accent);">ROUTE PLANNER LOGIN</h2>
+    <input type="email" id="login-user" class="login-input" placeholder="Email" autofocus>
+    <input type="password" id="login-pin" class="login-input" placeholder="Password">
+    <button class="login-submit" onclick="attemptLogin()">Authorize</button>
+  </div>
+</div>
+
 <div class="dashboard">
   <!-- MAIN CALCULATOR PANEL -->
   <div class="calc-panel" id="calcPanel">
@@ -851,7 +907,57 @@
   </div>
 </div>
 
+<!-- Firebase SDKs (from ref.html) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 <script>
+  // ========== FIREBASE AUTH (from ref.html) ==========
+  firebase.initializeApp({
+    apiKey: "AIzaSyAKmgoXA4m3cRTmxJq4aUyva5SVvFbTNqg",
+    authDomain: "eandccourier-36fcc.firebaseapp.com",
+    databaseURL: "https://eandccourier-36fcc-default-rtdb.firebaseio.com",
+    projectId: "eandccourier-36fcc",
+    messagingSenderId: "1067680083511",
+    appId: "1:1067680083511:android:22d1eb3757302492bd19b2"
+  });
+  const auth = firebase.auth();
+  const db = firebase.database();
+  let currentUser = null;
+
+  function attemptLogin() {
+    const email = document.getElementById('login-user').value.trim();
+    const pass = document.getElementById('login-pin').value.trim();
+    if (!email || !pass) return;
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+      .then(() => auth.signInWithEmailAndPassword(email, pass))
+      .catch(err => alert("Login Failed: " + err.message));
+  }
+
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      const email = user.email;
+      const username = email.split('@')[0].toLowerCase();
+      db.ref(`roles/${username}/command`).once('value').then(snap => {
+        if (snap.val() === true) {
+          currentUser = username;
+          document.getElementById('login-overlay').style.display = 'none';
+          // Calculator is already initialized; just focus the first field if desired.
+          const firstWeight = document.querySelector('#weightRowsList .weight-lbs');
+          if (firstWeight) firstWeight.focus();
+        } else {
+          alert("ACCESS DENIED");
+          auth.signOut();
+          document.getElementById('login-overlay').style.display = 'flex';
+        }
+      });
+    } else {
+      document.getElementById('login-overlay').style.display = 'flex';
+    }
+  });
+
+  // ========== ORIGINAL CALCULATOR CODE (unchanged) ==========
   // ========== GLOBALS & MAIN CALCULATOR ==========
   const weightContainer = document.getElementById('weightRowsList');
   const dimContainer = document.getElementById('dimRowsList');
