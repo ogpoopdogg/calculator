@@ -2,8 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>E&C Courier | Professional Edition + Weight/Dim Helper</title>
+  <meta name="description" content="E&C Courier rate calculator with weight vs dimensional weight helper and log history.">
+  <meta name="theme-color" content="#0a0e12">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="E&C Calc">
   <style>
     * {
       margin: 0;
@@ -15,80 +25,130 @@
       background: #0a0e12;
       font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, 'Roboto', sans-serif;
       font-weight: 400;
-      padding: 20px;
       height: 100vh;
+      height: 100dvh;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
+    button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 
+    /* ----- APP HEADER ----- */
+    .app-header {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px max(28px, env(safe-area-inset-right)) 14px max(28px, env(safe-area-inset-left));
+      padding-top: calc(14px + env(safe-area-inset-top));
+      border-bottom: 1px solid #1c212b;
+      background: #0a0e12;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+    .brand-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      flex-shrink: 0;
+    }
+    .brand-sub {
+      font-size: 0.68rem;
+      color: #7e8aa2;
+      letter-spacing: 0.4px;
+      margin-top: 2px;
+    }
+    .install-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(95deg, #f5b700, #ffd966);
+      border: none;
+      color: #0a0e12;
+      font-weight: 600;
+      font-size: 0.8rem;
+      padding: 9px 16px;
+      border-radius: 40px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(245, 183, 0, 0.25);
+      white-space: nowrap;
+    }
+    .install-btn[hidden] { display: none; }
+    .install-btn svg { width: 16px; height: 16px; }
+    .install-btn:hover { filter: brightness(1.05); }
+
+    /* ----- PANELS (desktop: 3 columns) ----- */
     .dashboard {
+      flex: 1;
+      min-height: 0;
+      width: 100%;
       max-width: 1800px;
       margin: 0 auto;
-      display: flex;
-      flex-wrap: nowrap;
+      display: grid;
+      grid-template-columns: minmax(460px, 1.6fr) minmax(360px, 1.15fr) minmax(300px, 1fr);
+      grid-template-rows: minmax(0, 1fr);
       gap: 24px;
-      height: 100%;
+      padding: 24px max(28px, env(safe-area-inset-right)) 28px max(28px, env(safe-area-inset-left));
       overflow: hidden;
     }
 
-    .calc-panel {
-      flex: 1.8;
-      min-width: 450px;
+    .panel {
+      min-width: 0;
+      min-height: 0;
+      height: 100%;
       background: #0f1219;
       border-radius: 20px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-      padding: 20px 24px;
       border: 1px solid #2a2f3a;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+      padding: 24px;
       overflow-y: auto;
       scrollbar-width: thin;
-      height: 100%;
+      scrollbar-color: #2f3543 transparent;
     }
-
-    .calc-panel::-webkit-scrollbar {
+    .panel::-webkit-scrollbar {
       width: 5px;
-      background: #1e222b;
+      background: transparent;
+    }
+    .panel::-webkit-scrollbar-thumb {
+      background: #2f3543;
+      border-radius: 8px;
     }
     .calc-panel::-webkit-scrollbar-thumb {
       background: #f5b700;
-      border-radius: 8px;
     }
 
-    .helper-panel {
-      flex: 1.2;
-      min-width: 340px;
-      background: #0f1219;
-      border-radius: 20px;
-      border: 1px solid #2a2f3a;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-      padding: 18px 20px;
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      height: 100%;
-    }
-
+    .helper-panel,
     .history-panel {
-      flex: 1;
-      min-width: 280px;
-      background: #0f1219;
-      border-radius: 20px;
-      border: 1px solid #2a2f3a;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-      padding: 18px 20px;
       display: flex;
       flex-direction: column;
-      overflow-y: auto;
-      height: 100%;
     }
 
     h1 {
-      font-size: 1.6rem;
-      font-weight: 500;
+      font-size: 1.35rem;
+      font-weight: 600;
       letter-spacing: -0.3px;
+      line-height: 1.1;
       background: linear-gradient(135deg, #f5b700, #ffd966);
       background-clip: text;
       -webkit-background-clip: text;
       color: transparent;
-      margin-bottom: 18px;
+    }
+
+    .section-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #7e8aa2;
+      margin-bottom: 8px;
+    }
+    .calc-section {
+      margin-bottom: 22px;
     }
 
     h2 {
@@ -104,7 +164,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
     }
     .helper-title h2 {
       margin-bottom: 0;
@@ -317,7 +377,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      margin-bottom: 14px;
+      margin-bottom: 10px;
       background: #0b0e14;
       padding: 12px;
       border-radius: 14px;
@@ -375,7 +435,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
-      margin-bottom: 14px;
+      margin-bottom: 10px;
       background: #0b0e14;
       padding: 12px;
       border-radius: 14px;
@@ -467,7 +527,7 @@
       width: 100%;
       cursor: pointer;
       transition: 0.08s;
-      margin-top: 12px;
+      margin-top: 0;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
     .calc-action:focus {
@@ -480,8 +540,8 @@
     .result-mega {
       background: #0b0e14;
       border-radius: 18px;
-      padding: 14px 20px;
-      margin: 14px 0 10px;
+      padding: 18px 22px;
+      margin: 20px 0 12px;
       border: 1px solid #2a2f3a;
       transition: all 0.3s ease;
     }
@@ -648,8 +708,8 @@
     .box-card {
       background: #0b0e14;
       border-radius: 20px;
-      padding: 6px 8px !important;
-      margin-bottom: 6px !important;
+      padding: 10px 12px !important;
+      margin-bottom: 10px !important;
       /* Change 4: static faded white border */
       border: 2px solid #4a5568;
       position: relative;
@@ -826,6 +886,284 @@
       cursor: pointer;
       text-transform: uppercase;
     }
+    .login-box .install-btn {
+      margin-top: 16px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    /* ----- MOBILE TAB BAR (hidden on desktop) ----- */
+    .tabbar {
+      display: none;
+      flex-shrink: 0;
+      gap: 6px;
+      background: #0a0e12;
+      border-top: 1px solid #1f2430;
+      padding: 6px max(10px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+    }
+    .tab {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      min-height: 54px;
+      background: none;
+      border: none;
+      border-radius: 14px;
+      color: #7e8aa2;
+      font-family: inherit;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: color 0.15s, background 0.15s;
+    }
+    .tab svg {
+      width: 22px;
+      height: 22px;
+    }
+    .tab.active {
+      color: #f5b700;
+      background: #161b25;
+    }
+    .tab-badge {
+      position: absolute;
+      top: 5px;
+      left: calc(50% + 7px);
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 9px;
+      background: #2ecc71;
+      color: #0a0e12;
+      font-size: 0.62rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .tab-badge:empty { display: none; }
+    .tab-badge.bump { animation: badgeBump 0.4s ease; }
+    @keyframes badgeBump {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.35); }
+      100% { transform: scale(1); }
+    }
+
+    /* ----- UPDATE BANNER / TOAST / INSTALL SHEET ----- */
+    .update-banner {
+      position: fixed;
+      left: 50%;
+      top: calc(12px + env(safe-area-inset-top));
+      transform: translateX(-50%);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: #18202e;
+      border: 1px solid #2ecc71;
+      color: #eef2ff;
+      font-size: 0.85rem;
+      padding: 10px 10px 10px 18px;
+      border-radius: 40px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      max-width: calc(100% - 24px);
+    }
+    .update-banner[hidden] { display: none; }
+    .update-banner button {
+      background: #2ecc71;
+      color: #0a0e12;
+      border: none;
+      font-weight: 600;
+      font-size: 0.8rem;
+      padding: 8px 16px;
+      border-radius: 30px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(90px + env(safe-area-inset-bottom));
+      transform: translate(-50%, 20px);
+      z-index: 10000;
+      background: #18202e;
+      border: 1px solid #2f3543;
+      color: #eef2ff;
+      font-size: 0.8rem;
+      padding: 10px 18px;
+      border-radius: 30px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      white-space: nowrap;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+    .sheet-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 10001;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 16px;
+      padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    }
+    .sheet-backdrop[hidden] { display: none; }
+    .sheet {
+      width: 100%;
+      max-width: 420px;
+      background: #0f1219;
+      border: 1px solid #2a2f3a;
+      border-radius: 20px;
+      padding: 22px;
+      color: #eef2ff;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+    }
+    .sheet h2 { margin-bottom: 14px; }
+    .sheet ol {
+      padding-left: 20px;
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: #b9c3db;
+    }
+    .sheet ol svg {
+      width: 18px;
+      height: 18px;
+      vertical-align: -3px;
+      color: #3b82f6;
+    }
+    .sheet b { color: #eef2ff; }
+    .sheet .sheet-close {
+      margin-top: 18px;
+      width: 100%;
+      padding: 12px;
+      border-radius: 40px;
+      border: 1px solid #3a4050;
+      background: #1a1e2a;
+      color: #f5b700;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    @media (min-width: 900px) {
+      .sheet-backdrop { align-items: center; }
+      .toast { bottom: 32px; }
+    }
+
+    /* ----- MEDIUM SCREENS: calculator left, helper + history stacked right ----- */
+    @media (min-width: 900px) and (max-width: 1279px) {
+      .dashboard {
+        grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+        grid-template-rows: minmax(0, 3fr) minmax(0, 2fr);
+        gap: 20px;
+        padding: 20px max(24px, env(safe-area-inset-right)) 24px max(24px, env(safe-area-inset-left));
+      }
+      .calc-panel { grid-column: 1; grid-row: 1 / span 2; }
+      .helper-panel { grid-column: 2; grid-row: 1; }
+      .history-panel { grid-column: 2; grid-row: 2; }
+    }
+
+    /* ----- PHONES & SMALL TABLETS: swipeable sections + bottom tab bar ----- */
+    @media (max-width: 899px) {
+      .app-header {
+        padding: 10px max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left));
+        padding-top: calc(10px + env(safe-area-inset-top));
+      }
+      .brand-icon { width: 30px; height: 30px; }
+      h1 { font-size: 1.15rem; }
+      .install-btn { padding: 8px 14px; font-size: 0.75rem; }
+
+      .dashboard {
+        display: flex;
+        gap: 0;
+        padding: 0;
+        max-width: none;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        overscroll-behavior-x: contain;
+        scrollbar-width: none;
+      }
+      .dashboard::-webkit-scrollbar { display: none; }
+      .panel {
+        flex: 0 0 100%;
+        width: 100%;
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 20px max(16px, env(safe-area-inset-right)) 32px max(16px, env(safe-area-inset-left));
+        overscroll-behavior-y: contain;
+      }
+      .tabbar { display: flex; }
+
+      /* stop iOS zooming into fields + bigger touch targets */
+      .dashboard input[type="number"],
+      .login-input {
+        font-size: 16px !important;
+      }
+      .weight-item {
+        flex: 1 1 150px;
+        padding: 6px 6px 6px 16px;
+      }
+      .weight-item input {
+        flex: 1;
+        width: auto;
+        min-width: 0;
+      }
+      .dimension-card {
+        display: flex;
+        width: 100%;
+        gap: 8px;
+        padding: 6px 6px 6px 14px;
+      }
+      .dimension-card .dim-field { flex: 1; min-width: 0; }
+      .dimension-card .dim-field input { width: 100%; min-width: 0; }
+      .remove-weight-btn,
+      .remove-dim-btn,
+      .remove-box-btn {
+        min-width: 40px;
+        min-height: 40px;
+      }
+      .add-btn {
+        padding: 11px 18px;
+        font-size: 0.75rem;
+      }
+      .calc-action,
+      .helper-calc-btn {
+        padding: 16px 20px;
+        font-size: 0.95rem;
+      }
+      .box-card .send-box-btn,
+      .box-actions .send-box-btn {
+        padding: 10px 12px !important;
+        font-size: 0.75rem !important;
+      }
+      .helper-panel .box-card .box-actual-weight {
+        width: 70% !important;
+      }
+      .box-card > div:first-child {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+      }
+      .history-item:first-child {
+        margin-left: 0;
+        margin-right: 0;
+        width: 100%;
+      }
+      .update-banner { font-size: 0.8rem; }
+    }
   </style>
 </head>
 <body>
@@ -836,32 +1174,52 @@
     <input type="email" id="login-user" class="login-input" placeholder="Email" autofocus>
     <input type="password" id="login-pin" class="login-input" placeholder="Password">
     <button class="login-submit" onclick="attemptLogin()">Authorize</button>
+    <button type="button" class="install-btn" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg> Install App</button>
   </div>
 </div>
 
-<div class="dashboard">
-  <!-- MAIN CALCULATOR PANEL -->
-  <div class="calc-panel" id="calcPanel">
-    <h1>E&C COURIER</h1>
+<header class="app-header">
+  <div class="brand">
+    <img src="icons/icon.svg" alt="" class="brand-icon">
+    <div>
+      <h1>E&C COURIER</h1>
+      <div class="brand-sub">RATE CALCULATOR</div>
+    </div>
+  </div>
+  <button type="button" class="install-btn" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg> Install App</button>
+</header>
 
+<main class="dashboard" id="dashboard">
+  <!-- MAIN CALCULATOR PANEL -->
+  <div class="calc-panel panel" id="calcPanel">
+    <div class="helper-title">
+      <h2>Calculator</h2>
+    </div>
+
+    <div class="calc-section">
+    <div class="section-label">Weights (lbs)</div>
     <div id="weightRowsList" class="weight-rows-container">
       <div class="weight-item">
         <label>LBS</label>
-        <input type="number" class="weight-lbs" placeholder="" value="">
+        <input type="number" inputmode="decimal" class="weight-lbs" placeholder="" value="">
         <button type="button" class="remove-weight-btn" disabled>✖</button>
       </div>
     </div>
     <button type="button" id="addWeightBtn" class="add-btn">ADD WEIGHT FIELD</button>
+    </div>
 
+    <div class="calc-section">
+    <div class="section-label">Dimensions (inches)</div>
     <div id="dimRowsList" class="dim-rows-container">
       <div class="dimension-card">
-        <div class="dim-field"><label>L</label><input type="number" class="dim-len" placeholder="" value=""></div>
-        <div class="dim-field"><label>W</label><input type="number" class="dim-wid" placeholder="" value=""></div>
-        <div class="dim-field"><label>H</label><input type="number" class="dim-hei" placeholder="" value=""></div>
+        <div class="dim-field"><label>L</label><input type="number" inputmode="decimal" class="dim-len" placeholder="" value=""></div>
+        <div class="dim-field"><label>W</label><input type="number" inputmode="decimal" class="dim-wid" placeholder="" value=""></div>
+        <div class="dim-field"><label>H</label><input type="number" inputmode="decimal" class="dim-hei" placeholder="" value=""></div>
         <button type="button" class="remove-dim-btn" disabled>✖</button>
       </div>
     </div>
     <button type="button" id="addDimensionBtn" class="add-btn">ADD DIMENSION FIELD</button>
+    </div>
 
     <button id="calculateBtn" class="calc-action">CALCULATE & LOG (ENTER)</button>
 
@@ -882,7 +1240,7 @@
   </div>
 
   <!-- HELPER PANEL (NEW PER-BOX STRUCTURE) -->
-  <div class="helper-panel" id="helperPanel">
+  <div class="helper-panel panel" id="helperPanel">
     <div class="helper-title">
       <h2>Weight vs Dim Helper</h2>
       <span class="helper-badge">Per-Box Comparator</span>
@@ -896,16 +1254,51 @@
   </div>
 
   <!-- HISTORY PANEL -->
-  <div class="history-panel">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-      <h2 style="font-size: 1.1rem; font-weight: 500; color: #f5b700;">LOG HISTORY</h2>
+  <div class="history-panel panel" id="historyPanel">
+    <div class="helper-title">
+      <h2>Log History</h2>
       <button id="clearHistoryBtn" class="clear-btn" tabindex="-1">clear all</button>
     </div>
     <div id="historyList" style="flex:1; overflow-y: auto;">
       <div style="color:#6b7a8f; text-align:center; padding: 30px;">No calculations yet.<br>Press ENTER or click CALCULATE.</div>
     </div>
   </div>
+</main>
+
+<!-- MOBILE TAB BAR -->
+<nav class="tabbar" id="tabbar" aria-label="Sections">
+  <button type="button" class="tab active" data-target="calcPanel">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="3"/><rect x="8" y="5.5" width="8" height="4" rx="1"/><path d="M8.5 13h.01M12 13h.01M15.5 13h.01M8.5 16.5h.01M12 16.5h.01M15.5 16.5h.01"/></svg>
+    Calculator
+  </button>
+  <button type="button" class="tab" data-target="helperPanel">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5"/><path d="M12 13v8"/></svg>
+    Boxes
+    <span class="tab-badge" id="boxesBadge"></span>
+  </button>
+  <button type="button" class="tab" data-target="historyPanel">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
+    History
+    <span class="tab-badge" id="historyBadge"></span>
+  </button>
+</nav>
+
+<!-- UPDATE BANNER -->
+<div class="update-banner" id="updateBanner" hidden>
+  <span>A new version is ready</span>
+  <button type="button" id="updateReloadBtn">Update now</button>
 </div>
+
+<!-- INSTALL INSTRUCTIONS (iPhone / iPad / Safari) -->
+<div class="sheet-backdrop" id="installSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="installSheetTitle">
+    <h2 id="installSheetTitle">Install E&C Calc</h2>
+    <ol id="installSteps"></ol>
+    <button type="button" class="sheet-close" id="installSheetClose">Got it</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <!-- Firebase SDKs (from ref.html) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -956,6 +1349,9 @@
       document.getElementById('login-overlay').style.display = 'flex';
     }
   });
+
+  // App chrome (header, tab bar, popups) is kept out of the calculator's keyboard navigation
+  const APP_CHROME_SELECTOR = '.app-header, .tabbar, .update-banner, .sheet-backdrop';
 
   // ========== ORIGINAL CALCULATOR CODE (unchanged) ==========
   // ========== GLOBALS & MAIN CALCULATOR ==========
@@ -1031,8 +1427,8 @@
     });
   }
   
-  function addWeightRow() { const newItem=document.createElement('div'); newItem.className='weight-item'; newItem.innerHTML=`<label>LBS</label><input type="number" class="weight-lbs" placeholder="" value=""><button type="button" class="remove-weight-btn">✖</button>`; newItem.querySelector('.remove-weight-btn').addEventListener('click',()=>{ newItem.remove(); updateWeightRemoveButtons(); resetTotalDisplay(); }); weightContainer.appendChild(newItem); updateWeightRemoveButtons(); attachZeroHandling(newItem.querySelector('.weight-lbs')); bindZeroHandlersToAllInputs(); resetTotalDisplay(); attachArrowKeyListeners(); attachInvalidListenerToField(newItem.querySelector('.weight-lbs')); }
-  function addDimensionRow() { const newCard=document.createElement('div'); newCard.className='dimension-card'; newCard.innerHTML=`<div class="dim-field"><label>L</label><input type="number" class="dim-len" placeholder="" value=""></div><div class="dim-field"><label>W</label><input type="number" class="dim-wid" placeholder="" value=""></div><div class="dim-field"><label>H</label><input type="number" class="dim-hei" placeholder="" value=""></div><button type="button" class="remove-dim-btn">✖</button>`; newCard.querySelector('.remove-dim-btn').addEventListener('click',()=>{ newCard.remove(); updateDimRemoveButtons(); resetTotalDisplay(); }); dimContainer.appendChild(newCard); updateDimRemoveButtons(); attachZeroHandling(newCard.querySelector('.dim-len')); attachZeroHandling(newCard.querySelector('.dim-wid')); attachZeroHandling(newCard.querySelector('.dim-hei')); bindZeroHandlersToAllInputs(); resetTotalDisplay(); attachArrowKeyListeners(); newCard.querySelectorAll('input').forEach(inp=>attachInvalidListenerToField(inp)); }
+  function addWeightRow() { const newItem=document.createElement('div'); newItem.className='weight-item'; newItem.innerHTML=`<label>LBS</label><input type="number" inputmode="decimal" class="weight-lbs" placeholder="" value=""><button type="button" class="remove-weight-btn">✖</button>`; newItem.querySelector('.remove-weight-btn').addEventListener('click',()=>{ newItem.remove(); updateWeightRemoveButtons(); resetTotalDisplay(); }); weightContainer.appendChild(newItem); updateWeightRemoveButtons(); attachZeroHandling(newItem.querySelector('.weight-lbs')); bindZeroHandlersToAllInputs(); resetTotalDisplay(); attachArrowKeyListeners(); attachInvalidListenerToField(newItem.querySelector('.weight-lbs')); }
+  function addDimensionRow() { const newCard=document.createElement('div'); newCard.className='dimension-card'; newCard.innerHTML=`<div class="dim-field"><label>L</label><input type="number" inputmode="decimal" class="dim-len" placeholder="" value=""></div><div class="dim-field"><label>W</label><input type="number" inputmode="decimal" class="dim-wid" placeholder="" value=""></div><div class="dim-field"><label>H</label><input type="number" inputmode="decimal" class="dim-hei" placeholder="" value=""></div><button type="button" class="remove-dim-btn">✖</button>`; newCard.querySelector('.remove-dim-btn').addEventListener('click',()=>{ newCard.remove(); updateDimRemoveButtons(); resetTotalDisplay(); }); dimContainer.appendChild(newCard); updateDimRemoveButtons(); attachZeroHandling(newCard.querySelector('.dim-len')); attachZeroHandling(newCard.querySelector('.dim-wid')); attachZeroHandling(newCard.querySelector('.dim-hei')); bindZeroHandlersToAllInputs(); resetTotalDisplay(); attachArrowKeyListeners(); newCard.querySelectorAll('input').forEach(inp=>attachInvalidListenerToField(inp)); }
   function computeBaseRateFromWeight(lbs) { let base=0; if(lbs<=20) base=23.27; else if(lbs<=100) base=23.27+(lbs-20)*0.20; else if(lbs<=1000) base=23.27+80*0.20+(lbs-100)*0.15; else base=23.27+80*0.20+900*0.15+(lbs-1000)*0.10; if(beyondCheckbox.checked) base+=7.0; return base; }
   function computeBaseRateGivenState(lbs, beyondState) { let base=0; if(lbs<=20) base=23.27; else if(lbs<=100) base=23.27+(lbs-20)*0.20; else if(lbs<=1000) base=23.27+80*0.20+(lbs-100)*0.15; else base=23.27+80*0.20+900*0.15+(lbs-1000)*0.10; if(beyondState) base+=7.0; return base; }
   function getTotalEffectiveWeight() { let totalWeight=0; document.querySelectorAll('#weightRowsList .weight-lbs').forEach(inp=>{ totalWeight+=getNumericValue(inp); }); let totalDimWeight=0; document.querySelectorAll('#dimRowsList .dimension-card').forEach(card=>{ let l=getNumericValue(card.querySelector('.dim-len')); let w=getNumericValue(card.querySelector('.dim-wid')); let h=getNumericValue(card.querySelector('.dim-hei')); if(l>0&&w>0&&h>0) totalDimWeight+=Math.round((l*w*h)/1728*10); }); return { effectiveLbs: totalWeight+totalDimWeight, description:`total weight: ${(totalWeight+totalDimWeight).toFixed(1)} lbs` }; }
@@ -1153,8 +1549,8 @@
     const card=document.createElement('div'); card.className='box-card';
     card.innerHTML=`
       <div style="display: flex; justify-content: flex-end;"><button type="button" class="remove-box-btn" aria-label="Remove box">✖</button></div>
-      <div class="compare-input-group"><label>ACTUAL WEIGHT (lbs)</label><input type="number" class="box-actual-weight" placeholder="" value="${boxData.weight}"></div>
-      <div class="compare-input-group"><label>DIMENSIONS (inches)</label><div class="dim-group" style="display:flex;gap:8px;"><div class="dim-field"><label>L</label><input type="number" class="box-dim-l" placeholder="" value="${boxData.l}"></div><div class="dim-field"><label>W</label><input type="number" class="box-dim-w" placeholder="" value="${boxData.w}"></div><div class="dim-field"><label>H</label><input type="number" class="box-dim-h" placeholder="" value="${boxData.h}"></div></div></div>
+      <div class="compare-input-group"><label>ACTUAL WEIGHT (lbs)</label><input type="number" inputmode="decimal" class="box-actual-weight" placeholder="" value="${boxData.weight}"></div>
+      <div class="compare-input-group"><label>DIMENSIONS (inches)</label><div class="dim-group" style="display:flex;gap:8px;"><div class="dim-field"><label>L</label><input type="number" inputmode="decimal" class="box-dim-l" placeholder="" value="${boxData.l}"></div><div class="dim-field"><label>W</label><input type="number" inputmode="decimal" class="box-dim-w" placeholder="" value="${boxData.w}"></div><div class="dim-field"><label>H</label><input type="number" inputmode="decimal" class="box-dim-h" placeholder="" value="${boxData.h}"></div></div></div>
       <div class="comparison-row"><div class="comparison-box" data-box-comp="actual"><div class="box-label">ACTUAL WEIGHT</div><div class="box-value" id="actualValDisplay">0 lbs</div></div><div class="comparison-box" data-box-comp="dim"><div class="box-label">DIM WEIGHT</div><div class="box-value" id="dimValDisplay">0 lbs</div></div></div>
       <div class="box-actions"><button class="send-box-btn">Send this box</button></div>
     `;
@@ -1313,12 +1709,12 @@
     while(weightContainer.children.length > 0) weightContainer.removeChild(weightContainer.lastChild);
     const defaultWeightRow = document.createElement('div');
     defaultWeightRow.className = 'weight-item';
-    defaultWeightRow.innerHTML = `<label>LBS</label><input type="number" class="weight-lbs" placeholder="" value=""><button type="button" class="remove-weight-btn" disabled>✖</button>`;
+    defaultWeightRow.innerHTML = `<label>LBS</label><input type="number" inputmode="decimal" class="weight-lbs" placeholder="" value=""><button type="button" class="remove-weight-btn" disabled>✖</button>`;
     weightContainer.appendChild(defaultWeightRow);
     while(dimContainer.children.length > 0) dimContainer.removeChild(dimContainer.lastChild);
     const defaultDimRow = document.createElement('div');
     defaultDimRow.className = 'dimension-card';
-    defaultDimRow.innerHTML = `<div class="dim-field"><label>L</label><input type="number" class="dim-len" placeholder="" value=""></div><div class="dim-field"><label>W</label><input type="number" class="dim-wid" placeholder="" value=""></div><div class="dim-field"><label>H</label><input type="number" class="dim-hei" placeholder="" value=""></div><button type="button" class="remove-dim-btn" disabled>✖</button>`;
+    defaultDimRow.innerHTML = `<div class="dim-field"><label>L</label><input type="number" inputmode="decimal" class="dim-len" placeholder="" value=""></div><div class="dim-field"><label>W</label><input type="number" inputmode="decimal" class="dim-wid" placeholder="" value=""></div><div class="dim-field"><label>H</label><input type="number" inputmode="decimal" class="dim-hei" placeholder="" value=""></div><button type="button" class="remove-dim-btn" disabled>✖</button>`;
     dimContainer.appendChild(defaultDimRow);
     // populate weights
     if (entry.weights && entry.weights.length) {
@@ -1435,6 +1831,7 @@
     function getFocusableElements() {
       return Array.from(document.querySelectorAll(focusableSelector)).filter(el => {
         if (el.closest('.history-panel')) return false;
+        if (el.closest(APP_CHROME_SELECTOR)) return false;
         if (el.closest('.box-card') && el.classList && el.classList.contains('checkbox-beyond')) return false;
         return true;
       });
@@ -1524,6 +1921,13 @@
   document.addEventListener('keydown',function(e){
     if(e.key==='Enter'){
       const active=document.activeElement;
+      // login screen: Enter signs in (instead of running a calculation behind the overlay)
+      if(active.closest && active.closest('#login-overlay')){
+        if(active.classList && active.classList.contains('login-input')){ e.preventDefault(); attemptLogin(); }
+        return;
+      }
+      // header / tab bar / install + update popups: let Enter activate the button normally
+      if(active.closest && active.closest(APP_CHROME_SELECTOR)) return;
       if(active.closest && active.closest('#helperPanel')){
         if(active.classList && active.classList.contains('send-box-btn')){
           e.preventDefault();
@@ -1547,6 +1951,7 @@
     const focusableSelectors = 'button:not(#clearHistoryBtn), input[type="number"], .checkbox-beyond, .send-box-btn, #addWeightBtn, #addDimensionBtn, #addBoxBtn, #sendAllBoxesBtn, #calculateBtn';
     let elements = Array.from(document.querySelectorAll(focusableSelectors)).filter(el => {
       if (el.closest('.history-item')) return false;
+      if (el.closest(APP_CHROME_SELECTOR) || el.closest('#login-overlay')) return false;
       if (el.id === 'clearHistoryBtn') return false;
       return true;
     });
@@ -1574,6 +1979,212 @@
   });
   
   setTimeout(()=>{ const firstWeight=document.querySelector('#weightRowsList .weight-lbs'); if(firstWeight) firstWeight.focus(); bindZeroHandlersToAllInputs(); initArrowNavigation(); document.querySelectorAll('input[type="number"]').forEach(inp=>attachInvalidListenerToField(inp)); },100);
+</script>
+
+<script>
+  // ========== PWA: TOAST ==========
+  const toastEl = document.getElementById('toast');
+  let toastTimer = null;
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1800);
+  }
+
+  // ========== PWA: INSTALL BUTTON ==========
+  const installBtns = document.querySelectorAll('.install-btn');
+  const installSheet = document.getElementById('installSheet');
+  const installSteps = document.getElementById('installSteps');
+  const ua = navigator.userAgent;
+  const isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isMacSafari = !isIOS && /Macintosh/.test(ua) && /Safari\//.test(ua) && !/Chrome|Chromium|Edg|OPR|Firefox/.test(ua);
+  let deferredInstallPrompt = null;
+
+  function isStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+  function setInstallVisible(show) {
+    installBtns.forEach(btn => { btn.hidden = !show; });
+  }
+  const SHARE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
+  function openInstallSheet() {
+    if (isIOS) {
+      installSteps.innerHTML = `<li>Tap the <b>Share</b> button ${SHARE_ICON} in the browser toolbar.</li><li>Scroll down and tap <b>Add to Home Screen</b>.</li><li>Tap <b>Add</b>. The app opens full-screen from your home screen.</li>`;
+    } else if (isMacSafari) {
+      installSteps.innerHTML = `<li>In the menu bar choose <b>File</b> &rarr; <b>Add to Dock&hellip;</b></li><li>Click <b>Add</b>. The app opens in its own window from the Dock.</li>`;
+    } else {
+      installSteps.innerHTML = `<li>Open your browser menu (<b>&#8942;</b>).</li><li>Choose <b>Install app</b> or <b>Add to Home screen</b>.</li>`;
+    }
+    installSheet.hidden = false;
+  }
+  function closeInstallSheet() { installSheet.hidden = true; }
+  document.getElementById('installSheetClose').addEventListener('click', closeInstallSheet);
+  installSheet.addEventListener('click', (e) => { if (e.target === installSheet) closeInstallSheet(); });
+
+  installBtns.forEach(btn => btn.addEventListener('click', async () => {
+    if (deferredInstallPrompt) {
+      const promptEvent = deferredInstallPrompt;
+      deferredInstallPrompt = null;
+      promptEvent.prompt();
+      const choice = await promptEvent.userChoice;
+      if (choice && choice.outcome === 'accepted') setInstallVisible(false);
+      return;
+    }
+    openInstallSheet();
+  }));
+
+  // Chrome / Edge / Samsung Internet / Android: native install prompt
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    if (!isStandalone()) setInstallVisible(true);
+  });
+  window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    setInstallVisible(false);
+    showToast('App installed');
+  });
+  // iPhone / iPad / Mac Safari have no install prompt: button shows instructions instead
+  if ((isIOS || isMacSafari) && !isStandalone()) setInstallVisible(true);
+
+  // ========== PWA: AUTO-UPDATE ==========
+  // index.html is always loaded network-first by sw.js, so every launch gets the newest version.
+  // If the app is already open when an update lands, reload automatically when nothing is in
+  // progress; otherwise show an "Update now" banner so entered values / history aren't lost.
+  const updateBanner = document.getElementById('updateBanner');
+  let reloadingForUpdate = false;
+  function reloadForUpdate() {
+    if (reloadingForUpdate) return;
+    reloadingForUpdate = true;
+    window.location.reload();
+  }
+  document.getElementById('updateReloadBtn').addEventListener('click', reloadForUpdate);
+  function appIsPristine() {
+    const anyValue = Array.from(document.querySelectorAll('input')).some(inp =>
+      (inp.type === 'number' || inp.type === 'email' || inp.type === 'password') && inp.value !== '');
+    return !anyValue && (typeof historyRecords === 'undefined' || historyRecords.length === 0);
+  }
+  function onUpdateAvailable() {
+    if (document.visibilityState === 'hidden' || appIsPristine()) reloadForUpdate();
+    else updateBanner.hidden = false;
+  }
+
+  // Detect a new index.html while the app stays open (e.g. resumed from the background)
+  let pageFingerprint = null;
+  async function fetchPageFingerprint() {
+    try {
+      const res = await fetch(`./index.html?v-check=${Date.now()}`, { cache: 'no-store' });
+      if (!res.ok || !window.crypto || !crypto.subtle) return null;
+      const digest = await crypto.subtle.digest('SHA-256', await res.arrayBuffer());
+      return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+    } catch (err) {
+      return null;
+    }
+  }
+  async function checkPageForUpdate() {
+    const fp = await fetchPageFingerprint();
+    if (!fp) return;
+    if (pageFingerprint === null) { pageFingerprint = fp; return; }
+    if (fp !== pageFingerprint) { pageFingerprint = fp; onUpdateAvailable(); }
+  }
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      let hadController = !!navigator.serviceWorker.controller;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!hadController) { hadController = true; return; } // first install: page is already current
+        onUpdateAvailable();
+      });
+      navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(reg => {
+        const checkForUpdates = () => {
+          reg.update().catch(() => {});
+          checkPageForUpdate();
+        };
+        checkPageForUpdate(); // baseline fingerprint of the version that just loaded
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') checkForUpdates();
+        });
+        window.addEventListener('online', checkForUpdates);
+        setInterval(() => { if (document.visibilityState === 'visible') checkForUpdates(); }, 5 * 60 * 1000);
+      }).catch(err => console.warn('Service worker registration failed:', err));
+    });
+  }
+
+  // ========== MOBILE: SWIPEABLE SECTIONS + TAB BAR ==========
+  const dashboardEl = document.getElementById('dashboard');
+  const tabs = Array.from(document.querySelectorAll('.tabbar .tab'));
+  const panelIds = tabs.map(t => t.dataset.target);
+  const mobileQuery = window.matchMedia('(max-width: 899px)');
+  const isMobileLayout = () => mobileQuery.matches;
+  let activePanelIndex = 0;
+
+  function setActiveTab(idx) {
+    activePanelIndex = idx;
+    tabs.forEach((t, i) => {
+      t.classList.toggle('active', i === idx);
+      t.setAttribute('aria-current', i === idx ? 'page' : 'false');
+    });
+  }
+  function showPanel(id, smooth = true) {
+    const idx = panelIds.indexOf(id);
+    if (idx === -1) return;
+    setActiveTab(idx);
+    if (!isMobileLayout()) return;
+    dashboardEl.scrollTo({ left: idx * dashboardEl.clientWidth, behavior: smooth ? 'smooth' : 'auto' });
+  }
+  tabs.forEach(tab => tab.addEventListener('click', () => {
+    if (tab.classList.contains('active')) {
+      document.getElementById(tab.dataset.target).scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      showPanel(tab.dataset.target);
+    }
+  }));
+  // keep the tab bar in sync while swiping
+  let scrollRaf = null;
+  dashboardEl.addEventListener('scroll', () => {
+    if (!isMobileLayout() || scrollRaf) return;
+    scrollRaf = requestAnimationFrame(() => {
+      scrollRaf = null;
+      const idx = Math.round(dashboardEl.scrollLeft / Math.max(1, dashboardEl.clientWidth));
+      if (idx !== activePanelIndex && idx >= 0 && idx < tabs.length) setActiveTab(idx);
+    });
+  }, { passive: true });
+  // stay on the same section after rotating / resizing
+  window.addEventListener('resize', () => {
+    if (isMobileLayout()) dashboardEl.scrollLeft = activePanelIndex * dashboardEl.clientWidth;
+  });
+
+  // jump to the calculator after sending boxes or opening a history entry
+  sendAllBtn.addEventListener('click', () => { if (isMobileLayout()) showPanel('calcPanel'); });
+  document.getElementById('historyList').addEventListener('click', (e) => {
+    if (isMobileLayout() && e.target.closest('.history-item')) showPanel('calcPanel');
+  });
+  document.getElementById('boxesContainer').addEventListener('click', (e) => {
+    const btn = e.target.closest('.send-box-btn');
+    if (btn && !btn.disabled && isMobileLayout()) showToast('Box sent to calculator');
+  });
+
+  // badges: boxes with values / history entries
+  const boxesBadge = document.getElementById('boxesBadge');
+  const historyBadge = document.getElementById('historyBadge');
+  function setBadge(el, count) {
+    const text = count > 0 ? String(count) : '';
+    if (el.textContent === text) return;
+    el.textContent = text;
+    el.classList.remove('bump');
+    void el.offsetWidth;
+    if (text) el.classList.add('bump');
+  }
+  function updateBadges() {
+    const filledBoxes = Array.from(document.querySelectorAll('#boxesContainer .box-card')).filter(card =>
+      Array.from(card.querySelectorAll('input')).some(inp => inp.value !== '')).length;
+    setBadge(boxesBadge, filledBoxes);
+    setBadge(historyBadge, typeof historyRecords !== 'undefined' ? historyRecords.length : 0);
+  }
+  document.getElementById('boxesContainer').addEventListener('input', updateBadges);
+  new MutationObserver(updateBadges).observe(document.getElementById('boxesContainer'), { childList: true });
+  new MutationObserver(updateBadges).observe(document.getElementById('historyList'), { childList: true });
 </script>
 </body>
 </html>
