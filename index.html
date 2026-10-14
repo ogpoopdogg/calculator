@@ -1335,6 +1335,7 @@
       db.ref(`roles/${username}/command`).once('value').then(snap => {
         if (snap.val() === true) {
           currentUser = username;
+          loadSavedHistory();
           document.getElementById('login-overlay').style.display = 'none';
           // Calculator is already initialized; just focus the first field if desired.
           const firstWeight = document.querySelector('#weightRowsList .weight-lbs');
@@ -1370,6 +1371,30 @@
   const warningDiv = document.getElementById('calcWarning');
 
   let historyRecords = [];
+
+  // ========== SAVED HISTORY (kept on this device, separately for each logged-in user) ==========
+  const HISTORY_LIMIT = 12;
+  function historyStorageKey() { return currentUser ? `ecCalcHistory:${currentUser}` : null; }
+  function saveHistory() {
+    const key = historyStorageKey();
+    if (!key) return;
+    try { localStorage.setItem(key, JSON.stringify(historyRecords)); }
+    catch (err) { console.warn('Could not save history:', err); }
+  }
+  function isValidHistoryRecord(rec) {
+    return rec && typeof rec.id === 'number' && typeof rec.total === 'number' &&
+      typeof rec.baseRate === 'number' && typeof rec.effectiveLbs === 'number' && Array.isArray(rec.boxesData);
+  }
+  function loadSavedHistory() {
+    const key = historyStorageKey();
+    if (!key) return;
+    let saved = [];
+    try { saved = JSON.parse(localStorage.getItem(key) || '[]'); }
+    catch (err) { saved = []; }
+    historyRecords = Array.isArray(saved) ? saved.filter(isValidHistoryRecord).slice(0, HISTORY_LIMIT) : [];
+    lastSelectedHistoryId = null;
+    renderHistory();
+  }
   let celebrationTimeout = null;
   let lastSelectedHistoryId = null;
   // total persistence flags & data
@@ -1682,7 +1707,8 @@
     const timeStr = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' });
     const dateStr = new Date().toLocaleDateString();
     historyRecords.unshift({ id:Date.now(), time:`${dateStr} ${timeStr}`, weightCount:weights.length, dimCount:dimensions.length, nonZeroWeightCount, nonZeroDimCount, effectiveLbs, baseRate, total:finalTotal, weights, dimensions, boxesData:boxesSnapshot });
-    if(historyRecords.length>12) historyRecords.pop();
+    if(historyRecords.length>HISTORY_LIMIT) historyRecords.pop();
+    saveHistory();
     renderHistory();
     // reset inputs to default (empty fields)
     resetToSingleFields();
@@ -1808,7 +1834,7 @@
     });
   }
   calculateBtnMain.addEventListener('click',()=>{ performCalculationAndStore(); });
-  clearHistoryBtnMain.addEventListener('click',()=>{ if(confirm('Clear all?')){ historyRecords=[]; renderHistory(); } });
+  clearHistoryBtnMain.addEventListener('click',()=>{ if(confirm('Clear all?')){ historyRecords=[]; saveHistory(); renderHistory(); } });
   // Checkbox toggle: if total displayed, update total by +/-7
   beyondCheckbox.addEventListener('change', () => {
     if (isTotalDisplayed && lastEffectiveLbs > 0) {
@@ -2050,8 +2076,8 @@
 
   // ========== PWA: AUTO-UPDATE ==========
   // index.html is always loaded network-first by sw.js, so every launch gets the newest version.
-  // If the app is already open when an update lands, reload automatically when nothing is in
-  // progress; otherwise show an "Update now" banner so entered values / history aren't lost.
+  // If the app is already open when an update lands, reload automatically when nothing is being
+  // typed (history is saved, so it survives the reload); otherwise show an "Update now" banner.
   const updateBanner = document.getElementById('updateBanner');
   let reloadingForUpdate = false;
   function reloadForUpdate() {
@@ -2063,7 +2089,7 @@
   function appIsPristine() {
     const anyValue = Array.from(document.querySelectorAll('input')).some(inp =>
       (inp.type === 'number' || inp.type === 'email' || inp.type === 'password') && inp.value !== '');
-    return !anyValue && (typeof historyRecords === 'undefined' || historyRecords.length === 0);
+    return !anyValue;
   }
   function onUpdateAvailable() {
     if (document.visibilityState === 'hidden' || appIsPristine()) reloadForUpdate();
